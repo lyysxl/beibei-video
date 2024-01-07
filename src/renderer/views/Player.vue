@@ -3,7 +3,7 @@
     <div class="frame-title-bar">
       <div class="video-area">
         <div class="open-main">打开主界面</div>
-        <div class="title-bar">{{ videoInfo.title }}</div>
+        <div class="title-bar">{{ videoInfo.title || '贝贝视频' }}</div>
         <div class="control">xiazai</div>
       </div>
       <div class="frame-btn-area">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import Player from 'xgplayer'
+import Player, { Events } from 'xgplayer'
 import 'xgplayer/dist/index.min.css'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -59,7 +59,6 @@ onMounted(() => {
 const handleInit = () => {
   const type: string = route.params.type as string
   const id: string = route.params.id as string
-  console.log(type)
   type === 'movie' ? handleMovieLoad(id) : handleTVLoad(id)
 }
 
@@ -73,6 +72,7 @@ const handleMovieLoad = (id: string) => {
       )}${res.data.file}`
       videoInfo.value = res.data
       document.title = res.data.title
+      list.value = [1]
       handleXGPlayerInit(url)
     })
 }
@@ -98,6 +98,10 @@ const handleTVLoad = (id: string) => {
 }
 
 const handleXGPlayerInit = (urls: any) => {
+  if (player.value) {
+    player.value.switchURL(urls)
+    return
+  }
   player.value = new Player({
     el: playerRef.value,
     url: urls,
@@ -105,12 +109,28 @@ const handleXGPlayerInit = (urls: any) => {
     width: '100%',
     autoplay: true
   })
+
+  player.value.on(Events.TIME_UPDATE, (data) => {
+    console.log(data)
+  })
 }
 
 const handlePlayNum = (item: any, index: number) => {
   player.value?.switchURL(item.src)
   current.value = index
 }
+
+const handlePlayOther = (params: { type: string; id: string }) => {
+  const { type, id } = params
+  type === 'movie' ? handleMovieLoad(id) : handleTVLoad(id)
+}
+
+window.electronAPI.receiveMessageFromMain((message: any) => {
+  console.log(message)
+  handlePlayOther(message)
+})
+
+// window.handle = handlePlayOther
 </script>
 
 <style lang="less" scoped>
@@ -173,13 +193,18 @@ const handlePlayNum = (item: any, index: number) => {
     margin-left: -8px;
 
     .play-item {
+      font-size: 14px;
       width: 38px;
       height: 38px;
       line-height: 38px;
       text-align: center;
-      background-color: #000;
+      background-color: #202026;
       margin-top: 8px;
       margin-left: 8px;
+
+      &.active {
+        color: #ff5c38;
+      }
     }
   }
 }
@@ -190,9 +215,5 @@ const handlePlayNum = (item: any, index: number) => {
   left: 0;
   bottom: 0;
   right: 300px;
-}
-
-.active {
-  color: #f00;
 }
 </style>

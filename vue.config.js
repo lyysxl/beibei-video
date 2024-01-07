@@ -25,12 +25,12 @@ module.exports = {
   },
   pluginOptions: {
     electronBuilder: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       webSecurity: false,
       preload: 'src/main/preload.js',
       // contextIsolation: false,
       mainProcessFile: 'src/main/background.ts',
-      mainProcessWathch: ['src/main'],
+      mainProcessWathch: ['src/main/**'],
       builderOptions: {
         appId: "com.beibei",
         productName: "beibei-install",

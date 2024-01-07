@@ -26,11 +26,19 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useElectron } from '../hooks/use-electron'
+import { openPlayerFrame } from '../utils/electron'
 
+const { isElectron } = useElectron()
 const router = useRouter()
 const handleToPlayer = (movie: any) => {
   const type = movie.image.split('/')[0]
-  router.push(`/player/${type}/${movie.id}`)
+  const url = `/player/${type}/${movie.id}`
+  if (isElectron.value) {
+    openPlayerFrame({ url, type, id: movie.id })
+  } else {
+    router.push(url)
+  }
 }
 
 withDefaults(
@@ -46,7 +54,8 @@ withDefaults(
 <style lang="less" scoped>
 .movie-list {
   display: flex;
-  justify-content: space-around;
+  // justify-content: space-around;
+  flex-wrap: wrap;
   margin-left: -16px;
 }
 .movie-item {
@@ -57,19 +66,34 @@ withDefaults(
   overflow: hidden;
   background-color: #2e2e36;
   margin-bottom: 16px;
+  margin-left: 16px;
   border-radius: 5px;
 }
 
 .img {
   position: relative;
   border-radius: 3px;
-  height: 340px;
+  width: 100%;
+  // min-height: 320px;
+  // max-height: 500px;
+  object-fit: contain;
   overflow: hidden;
+
+  img {
+    max-height: 500px;
+    width: 100%;
+    object-fit: cover;
+  }
 }
 
 .title {
   color: #ededed;
   margin: 8px 0;
+  overflow: hidden;
+  /*文本不会换行*/
+  white-space: nowrap;
+  /*当文本溢出包含元素时，以省略号表示超出的文本*/
+  text-overflow: ellipsis;
 }
 
 .remark {
